@@ -22,15 +22,20 @@ function App() {
   }, []);
 
   return (
-    <div className="text-center p-4">
-      <h1 className="text-xl font-bold">Crypto Market Sentiment</h1>
-      <p className="mt-4 text-lg">
-        Market is:{" "}
-        <span className={`font-bold ${sentiment === 'Long' ? 'text-green-600' : 'text-red-600'}`}>
-          {sentiment}
-        </span>
-      </p>
+
+    <div className=" w-h-screen flex items-center justify-center min-h-screen bg-gray-50 px-4 ">
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-sm w-full text-center m-4">
+        <h1 className="text-2xl sm:text-lg font-extrabold text-gray-800">Market Status</h1>
+        <p className="mt-6 text-lg  text-gray-700">
+          Market is:{" "}
+          <span className={`font-bold ${sentiment === 'Long' ? 'text-green-600' : 'text-red-600'}`}>
+            {sentiment}
+          </span>
+        </p>
+      </div>
     </div>
+
+
   );
 }
 
