@@ -1,54 +1,104 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Crypto Sentiment Chrome Extension
 
-Currently, two official plugins are available:
+A simple Chrome extension built with React, TypeScript, and Tailwind CSS that displays whether the crypto market sentiment is **Long** or **Short**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Shows current market sentiment (Long / Short) with colored text
+- Responsive design with Tailwind CSS
+- Built with React + TypeScript for type safety and modern development
+- Easy to build and load locally as a Chrome extension
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16+ recommended)
+- npm or yarn
+- Google Chrome browser
+
+### Installation
+
+1. Clone the repo:
+
+   ```bash
+   git clone https://github.com/yourusername/crypto-sentiment-extension.git
+   cd crypto-sentiment-extension
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. Build the project:
+
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+
+---
+
+## Running Locally
+
+To test the extension during development, run:
+
+```bash
+npm run dev
+# or
+yarn dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Loading the Extension in Chrome
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Enable **Developer mode** (top-right toggle)
+3. Click **Load unpacked**
+4. Select the `dist` folder inside the project directory
+5. The extension icon should appear in the toolbar — click to open and see the market sentiment
+
+---
+
+## Adding Your Own Market Sentiment Data
+
+Replace the placeholder sentiment data in `src/App.tsx` with your own API calls or logic to fetch real-time crypto market sentiment.
+
+---
+
+## Technologies Used
+
+- React
+- TypeScript
+- Tailwind CSS
+- Vite (build tool)
+
+---
+
+## Troubleshooting
+
+- If the extension icon or popup doesn’t appear, make sure your `manifest.json` and icons are correctly placed in the `public` folder.
+- Check Chrome’s extension page console (`chrome://extensions/` → **Inspect views**) for errors.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Contact
+
+For questions or suggestions, feel free to open an issue or contact me at [aras.armani2014@gmail.com].
