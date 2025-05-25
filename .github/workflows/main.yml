@@ -1,8 +1,26 @@
 
 name: CI Pipeline  
 
-on:                 
+on:
   push:
     branches:
       - main
-      
+      - develop
+
+
+      jobs:
+  test-and-create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: npm test
+
+      - name: Create PR to main branch
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          head: develop
+          title: 'Auto PR from develop to main'
+          body: 'Created automatically after successful tests on develop.'
