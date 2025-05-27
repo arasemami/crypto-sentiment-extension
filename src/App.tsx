@@ -1,20 +1,44 @@
 import { useEffect, useState } from 'react';
 
-const API_URL = "https://api.coinglass.com/api/pro/v1/futures/longShortRate"; // Example API (use a real one)
+const API_URL = "https://boxcoino.yaserdarzi.ir/api/binance/report";
 
 function App() {
-  const [sentiment, setSentiment] = useState<'Long' | 'Short' | 'Loading'>('Loading');
+  const [sentiment, setSentiment] = useState<'Long' | 'Short' | 'Ranging' | 'Error' | 'Loading'>('Loading');
 
   useEffect(() => {
     async function fetchSentiment() {
       try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        const rate = data.data.BTC.longShortRate; // Example path
-        setSentiment(rate > 1 ? 'Long' : 'Short');
+        const myHeaders = new Headers();
+        myHeaders.append("Authorization", "Basic eWFzZXJkYXJ6aTp5YXNlcmRhcnpp");
+
+        const requestOptions = {
+          method: "GET",
+          headers: myHeaders,
+        };
+
+        const response = await fetch(API_URL, requestOptions);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const trend = data?.data?.trend;
+
+        if (trend === 'Long') {
+          setSentiment('Long');
+        } else if (trend === 'Short') {
+          setSentiment('Short');
+        } else if (trend === 'Ranging') {
+          setSentiment('Ranging');
+        } else {
+          setSentiment('Error');
+        }
+
       } catch (error) {
         console.error("Failed to fetch data", error);
-        setSentiment('Short'); // fallback
+        setSentiment('Error'); // fallback
       }
     }
 
@@ -58,3 +82,6 @@ function App() {
 }
 
 export default App;
+
+
+
