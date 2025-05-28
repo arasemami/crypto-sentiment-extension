@@ -43,10 +43,10 @@ function MarketCard({ label, data }: { label: string; data: MarketData | null })
         TP: {data?.tp_percent ? parseFloat(data.tp_percent).toFixed(0) : "--"}%
       </span>
       <span className="text-red-600 font-medium bg-red-100 px-2 py-1 rounded">
-        TP: {data?.sl_percent ? parseFloat(data.sl_percent).toFixed(0) : "--"}%
+        SL: {data?.sl_percent ? parseFloat(data.sl_percent).toFixed(0) : "--"}%
       </span>
          <span className="text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">
-        TP: {data?.sl_percent ? parseFloat(data.risk_free_percent).toFixed(0) : "--"}%
+        RF: {data?.sl_percent ? parseFloat(data.risk_free_percent).toFixed(0) : "--"}%
       </span>
     </div>
   );
