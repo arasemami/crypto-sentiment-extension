@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+const API_URL_BASE = "https://falcon-huobi.yaserdarzi.ir/api/binance/report";
 const API_URL = "https://boxcoino.yaserdarzi.ir/api/binance/report";
 const API_URL_SHORT = "https://boxcoino-short.yaserdarzi.ir/api/binance/report";
 
@@ -12,11 +13,16 @@ interface MarketData {
   trend: string;
 }
 
+interface ApiResponse {
+  data: MarketData | null;
+  error?: string;
+}
+
 const AUTH_HEADER = {
   Authorization: "Basic eWFzZXJkYXJ6aTp5YXNlcmRhcnpp",
 };
 
-async function fetchMarketData(url: string): Promise<MarketData | null> {
+async function fetchMarketData(url: string): Promise<ApiResponse> {
   try {
     const response = await fetch(url, {
       method: "GET",
@@ -28,14 +34,37 @@ async function fetchMarketData(url: string): Promise<MarketData | null> {
     }
 
     const json = await response.json();
-    return json?.data ?? null;
+    return { data: json?.data ?? null };
   } catch (error) {
     console.error("Fetch error:", error);
-    return null;
+    return { data: null, error: error instanceof Error ? error.message : 'Unknown error occurred' };
   }
 }
 
-function MarketCard({ label, data }: { label: string; data: MarketData | null }) {
+function MarketCard({ label, data, isLoading, error }: { 
+  label: string; 
+  data: MarketData | null;
+  isLoading: boolean;
+  error?: string;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg shadow-sm">
+        <span className="font-semibold text-gray-700">{label}:</span>
+        <span className="text-gray-500">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg shadow-sm">
+        <span className="font-semibold text-gray-700">{label}:</span>
+        <span className="text-red-500">Error: {error}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg shadow-sm">
       <span className="font-semibold text-gray-700">{label}:</span>
@@ -45,8 +74,8 @@ function MarketCard({ label, data }: { label: string; data: MarketData | null })
       <span className="text-red-600 font-medium bg-red-100 px-2 py-1 rounded">
         SL: {data?.sl_percent ? parseFloat(data.sl_percent).toFixed(0) : "--"}%
       </span>
-         <span className="text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">
-        RF: {data?.sl_percent ? parseFloat(data.risk_free_percent).toFixed(0) : "--"}%
+      <span className="text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">
+        RF: {data?.risk_free_percent ? parseFloat(data.risk_free_percent).toFixed(0) : "--"}%
       </span>
     </div>
   );
@@ -56,31 +85,40 @@ function App() {
   const [sentiment, setSentiment] = useState<SentimentType>('Loading');
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [marketDataShort, setMarketDataShort] = useState<MarketData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
-      const [longData, shortData] = await Promise.all([
-        fetchMarketData(API_URL),
-        fetchMarketData(API_URL_SHORT),
-      ]);
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const [baseResponse, longResponse, shortResponse] = await Promise.all([
+          fetchMarketData(API_URL_BASE),
+          fetchMarketData(API_URL),
+          fetchMarketData(API_URL_SHORT),
+        ]);
 
-      setMarketData(longData);
-      setMarketDataShort(shortData);
+        if (baseResponse.error) {
+          throw new Error(baseResponse.error);
+        }
 
-      const trend = longData?.trend?.toLowerCase();
+        setMarketData(longResponse.data);
+        setMarketDataShort(shortResponse.data);
 
-      switch (trend) {
-        case 'long':
-          setSentiment('Long');
-          break;
-        case 'short':
-          setSentiment('Short');
-          break;
-        case 'ranging':
-          setSentiment('Ranging');
-          break;
-        default:
-          setSentiment('Error');
+        // Determine sentiment directly from baseResponse
+        const trend = baseResponse.data?.trend?.toLowerCase() ?? 'error';
+        setSentiment(
+          trend === 'long' ? 'Long' :
+          trend === 'short' ? 'Short' :
+          trend === 'ranging' ? 'Ranging' : 'Error'
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load market data');
+        setSentiment('Error');
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -88,7 +126,7 @@ function App() {
   }, []);
 
   return (
-    <div className="w-h-screen flex items-center justify-center min-h-screen bg-gray-50 px-4">
+    <div className="w-screen flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <div className="bg-white p-4 rounded-lg shadow-md max-w-sm w-full text-center m-4">
         <h3 className="text-xl sm:text-lg font-bold text-gray-800 text-left pb-4">Market Status</h3>
 
@@ -96,14 +134,17 @@ function App() {
           <div className="flex items-center justify-center gap-2 bg-gray-50 p-4 rounded-lg shadow-sm">
             <p className="text-lg text-gray-700">
               Market is:{" "}
-              {sentiment === 'Loading' ? (
+              {isLoading ? (
                 <span className="font-bold text-gray-500">Loading...</span>
-              ) : sentiment === 'Error' ? (
-                <span className="font-bold text-red-600">Error</span>
+              ) : error ? (
+                <span className="font-bold text-red-600">Error: {error}</span>
               ) : (
                 <span
-                  className={`font-bold ${sentiment === 'Long' ? 'text-green-600' : 'text-red-600'
-                    }`}
+                  className={`font-bold ${
+                    sentiment === 'Long' ? 'text-green-600' : 
+                    sentiment === 'Short' ? 'text-red-600' :
+                    sentiment === 'Ranging' ? 'text-yellow-600' : 'text-gray-600'
+                  }`}
                 >
                   {sentiment}
                 </span>
@@ -111,8 +152,18 @@ function App() {
             </p>
           </div>
 
-          <MarketCard label="Short" data={marketDataShort} />
-          <MarketCard label="Long" data={marketData} />
+          <MarketCard 
+            label="Short" 
+            data={marketDataShort} 
+            isLoading={isLoading}
+            error={error || undefined}
+          />
+          <MarketCard 
+            label="Long" 
+            data={marketData} 
+            isLoading={isLoading}
+            error={error || undefined}
+          />
         </div>
       </div>
     </div>
