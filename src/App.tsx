@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 
-const API_URL_BASE = "https://falcon-huobi.yaserdarzi.ir/api/binance/report";
 const API_URL = "https://boxcoino.yaserdarzi.ir/api/binance/report";
-const API_URL_SHORT = "https://boxcoino-short.yaserdarzi.ir/api/binance/report";
 
 type SentimentType = 'Long' | 'Short' | 'Ranging' | 'Error' | 'Loading';
 
 interface MarketData {
-  tp_percent: string;
-  sl_percent: string;
-  risk_free_percent: string;
-  trend: string;
+  count: number;
+  greenCount: number;
+  redCount: number;
+  greenRate: string;
+  redRate: string;
 }
 
 interface ApiResponse {
@@ -37,13 +36,23 @@ async function fetchMarketData(url: string): Promise<ApiResponse> {
     return { data: json?.data ?? null };
   } catch (error) {
     console.error("Fetch error:", error);
-    return { data: null, error: error instanceof Error ? error.message : 'Unknown error occurred' };
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
   }
 }
 
-function MarketCard({ label, data, isLoading, error }: { 
-  label: string; 
-  data: MarketData | null;
+function MarketCard({
+  label,
+  greenRate,
+  redRate,
+  isLoading,
+  error,
+}: {
+  label: string;
+  greenRate: number | null;
+  redRate: number | null;
   isLoading: boolean;
   error?: string;
 }) {
@@ -69,13 +78,10 @@ function MarketCard({ label, data, isLoading, error }: {
     <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg shadow-sm">
       <span className="font-semibold text-gray-700">{label}:</span>
       <span className="text-green-600 font-medium bg-green-100 px-2 py-1 rounded">
-        TP: {data?.tp_percent ? parseFloat(data.tp_percent).toFixed(0) : "--"}%
+        Green: {greenRate !== null ? `${greenRate}%` : "--"}
       </span>
       <span className="text-red-600 font-medium bg-red-100 px-2 py-1 rounded">
-        SL: {data?.sl_percent ? parseFloat(data.sl_percent).toFixed(0) : "--"}%
-      </span>
-      <span className="text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">
-        RF: {data?.risk_free_percent ? parseFloat(data.risk_free_percent).toFixed(0) : "--"}%
+        Red: {redRate !== null ? `${redRate}%` : "--"}
       </span>
     </div>
   );
@@ -83,8 +89,8 @@ function MarketCard({ label, data, isLoading, error }: {
 
 function App() {
   const [sentiment, setSentiment] = useState<SentimentType>('Loading');
-  const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const [marketDataShort, setMarketDataShort] = useState<MarketData | null>(null);
+  const [greenRate, setGreenRate] = useState<number | null>(null);
+  const [redRate, setRedRate] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,28 +98,33 @@ function App() {
     async function loadData() {
       setIsLoading(true);
       setError(null);
-      
-      try {
-        const [baseResponse, longResponse, shortResponse] = await Promise.all([
-          fetchMarketData(API_URL_BASE),
-          fetchMarketData(API_URL),
-          fetchMarketData(API_URL_SHORT),
-        ]);
 
-        if (baseResponse.error) {
-          throw new Error(baseResponse.error);
+      try {
+        const response = await fetchMarketData(API_URL);
+
+        if (response.error) {
+          throw new Error(response.error);
         }
 
-        setMarketData(longResponse.data);
-        setMarketDataShort(shortResponse.data);
+        const data = response.data;
 
-        // Determine sentiment directly from baseResponse
-        const trend = baseResponse.data?.trend?.toLowerCase() ?? 'error';
-        setSentiment(
-          trend === 'long' ? 'Long' :
-          trend === 'short' ? 'Short' :
-          trend === 'ranging' ? 'Ranging' : 'Error'
-        );
+        if (data) {
+          const green = parseFloat(data.greenRate);
+          const red = parseFloat(data.redRate);
+
+          setGreenRate(Number.isFinite(green) ? Math.round(green) : null);
+          setRedRate(Number.isFinite(red) ? Math.round(red) : null);
+
+          if (green > 65) {
+            setSentiment('Long');
+          } else if (green < 35) {
+            setSentiment('Short');
+          } else {
+            setSentiment('Ranging');
+          }
+        } else {
+          setSentiment('Error');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load market data');
         setSentiment('Error');
@@ -141,9 +152,13 @@ function App() {
               ) : (
                 <span
                   className={`font-bold ${
-                    sentiment === 'Long' ? 'text-green-600' : 
-                    sentiment === 'Short' ? 'text-red-600' :
-                    sentiment === 'Ranging' ? 'text-yellow-600' : 'text-gray-600'
+                    sentiment === 'Long'
+                      ? 'text-green-600'
+                      : sentiment === 'Short'
+                        ? 'text-red-600'
+                        : sentiment === 'Ranging'
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
                   }`}
                 >
                   {sentiment}
@@ -152,15 +167,10 @@ function App() {
             </p>
           </div>
 
-          <MarketCard 
-            label="Short" 
-            data={marketDataShort} 
-            isLoading={isLoading}
-            error={error || undefined}
-          />
-          <MarketCard 
-            label="Long" 
-            data={marketData} 
+          <MarketCard
+            label="Market Data"
+            greenRate={greenRate}
+            redRate={redRate}
             isLoading={isLoading}
             error={error || undefined}
           />
